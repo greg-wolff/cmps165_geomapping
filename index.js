@@ -1,7 +1,7 @@
 //Define Margin
 const margin = { left: 120, right: 120, top: 120, bottom: 120 },
   width = window.innerWidth - margin.left - margin.right,
-  height = window.innerHeight - margin.top - margin.bottom;
+  height = 700 - margin.top - margin.bottom;
 
 //Define SVG
 const svg = d3
@@ -22,10 +22,16 @@ const projection = d3
 
 const path = d3.geoPath().projection(projection);
 
+let tooltip = d3
+  .select("body")
+  .append("div")
+  .attr("class", "tooltip")
+  .style("opacity", 0);
+
 const colorScheme = d3
   .scaleThreshold()
 
-var x = d3
+let x = d3
   .scaleLinear()
   .rangeRound([440, 700]);
 
@@ -49,7 +55,26 @@ const draw = prop =>
       .attr("fill", function(d) {
         return colorScheme(d.properties[prop]);
       })
-      .attr("d", path);
+      .attr("d", path)
+      .on("mouseover", function(d) {
+        tooltip.transition()
+          .duration(100)
+          .style("opacity", .9);
+        tooltip.style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
+        tooltip.append("div").text(d.properties.NAME_1);
+        tooltip.append("div").text(d.properties[prop]);
+      })
+      .on("mouseout", function(d) {
+        tooltip.selectAll("*").remove();
+        tooltip.transition()
+            .duration(0)
+            .style("opacity", 0);
+      })
+      // .on("mousemove", function (d) {
+      //   tooltip.style(`left`, `${d3.event.pageX}px`)
+      //           .style(`top`, `${d3.event.pageY - 28}px`)
+      // })
 
     svg.append("path")
       .datum(topojson.feature(topodata, topodata.objects.subdivisions))
@@ -57,7 +82,7 @@ const draw = prop =>
       .attr("stroke", "#fff")
       .attr("stroke-opacity", 0.8)
       .attr("d", path);
-      var g = svg.append("g").attr("transform", `translate(0,0)`);
+      let g = svg.append("g").attr("transform", `translate(0,0)`);
 
       g.selectAll("rect")
         .data(
@@ -92,19 +117,14 @@ const draw = prop =>
         )
         .select(".domain")
         .remove();
-  });
+});
 
-  draw("density");
+draw("density");
 
-  let button = d3.select("button")
-
+const button = d3.select("button");
 let toggle = false;
 button.on("click", () => {
   d3.select(".container").html("")
-  // svg.append("g")
-  //     .attr("class", "container")
-  //     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
   toggle ? draw("density") : draw("gdp");
   toggle = !toggle;
 })
